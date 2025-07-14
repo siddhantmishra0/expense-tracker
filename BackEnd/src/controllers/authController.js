@@ -217,7 +217,7 @@ const getLogin = async (req, res) => {
   }
 };
 
-const budget = async (req, res) => {
+const postBudget = async (req, res) => {
   try {
     const { userId, budgetAmount, budgetType } = req.body;
     if (!userId || !budgetAmount || !budgetType) {
@@ -271,6 +271,20 @@ const budget = async (req, res) => {
     return res.status(500).json("Budget fail");
   }
 };
+
+const getBudget = async (req,res) => {
+  try {
+    const {userId} = req.query;
+    if(!userId) {
+      return res.status(400).json({error: "Missing userId in query"});
+    }
+    const budgets = await BudgetModel.find({userId});
+    res.status(200).json(budgets)
+  } catch (error) {
+    console.log("Error fetching budgets: ",error)
+    res.status(500).json({error: "Server error fetching budgets"})
+  }
+}
 
 const getExpenses = async (req, res) => {
   try {
@@ -327,6 +341,26 @@ const postExpenses = async (req, res) => {
   }
 };
 
+const deleteExpenses = async (req, res) => {
+  try {
+    const result = await ExpenseModel.findOneAndDelete({
+      userId: req.user._id,
+      _id: req.params.id,
+    });
+    if (!result) return res.status(404).json({ error: "Expense not found" });
+    console.log(
+      "Deleting Expense with ID:",
+      req.params.id,
+      "for User:",
+      req.user._id
+    );
+    res.status(200).json({ message: "Expense deleted" });
+  } catch (error) {
+    res.status(500).json({ error: "Error deleting expense" });
+  }
+};
+
+
 // const postExpenses = async(req,res) => {
 //   // try {
 //   // const { newExpense } = req.body;
@@ -359,24 +393,6 @@ const postExpenses = async (req, res) => {
 //   }
 // }
 
-const deleteExpenses = async (req, res) => {
-  try {
-    const result = await ExpenseModel.findOneAndDelete({
-      userId: req.user._id,
-      _id: req.params.id,
-    });
-    if (!result) return res.status(404).json({ error: "Expense not found" });
-    console.log(
-      "Deleting Expense with ID:",
-      req.params.id,
-      "for User:",
-      req.user._id
-    );
-    res.status(200).json({ message: "Expense deleted" });
-  } catch (error) {
-    res.status(500).json({ error: "Error deleting expense" });
-  }
-};
 
 export {
   register,
@@ -385,7 +401,8 @@ export {
   generateAccessAndRefreshToken,
   refreshAccessToken,
   getLogin,
-  budget,
+  postBudget,
+  getBudget,
   getExpenses,
   postExpenses,
   deleteExpenses,
