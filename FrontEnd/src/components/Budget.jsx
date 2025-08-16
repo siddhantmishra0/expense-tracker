@@ -25,6 +25,17 @@ function Budget() {
     Education: 0,
     Other: 0,
   });
+  const [expenseByCategory, setExpenseByCategory] = useState({
+    Food: 0,
+    Transport: 0,
+    Bills: 0,
+    Shopping: 0,
+    Entertainment: 0,
+    Health: 0,
+    Education: 0,
+    Other: 0,
+    Overall: 0,
+  });
   const [budgetAmount, setBudgetAmount] = useState("");
   const [budgetType, setBudgetType] = useState("Other");
   const [userId, setUserId] = useState("");
@@ -56,10 +67,10 @@ function Budget() {
       {
         label: "Spent",
         data: [
-          budgets.Food * 0.8,
-          budgets.Transport * 0.6,
-          budgets.Bills * 0.9,
-          budgets.Shopping * 0.9,
+          expenseByCategory.Food ,
+          expenseByCategory.Transport,
+          expenseByCategory.Bills,
+          expenseByCategory.Shopping,
         ],
         backgroundColor: "rgba(255, 99, 132, 0.5)",
         borderColor: "rgb(255, 99, 132)",
@@ -146,6 +157,7 @@ function Budget() {
 
   useEffect(() => {
     if (userId) fetchBudget();
+    fetchExpenses()
   }, [userId]);
 
   // const selectBudget = (e) =>{
@@ -204,6 +216,54 @@ function Budget() {
     setBudgetAmount("");
   };
 
+  const fetchExpenses = async () => {
+     if (!userId) return;
+     try {
+       const res = await axios.get(
+         `http://localhost:3000/home/expense?userId=${userId}`,
+         { withCredentials: true }
+       );
+      //  console.log(res.data)
+       const data = res.data;
+
+       const spentBudgets = {
+         Food: 0,
+         Transport: 0,
+         Bills: 0,
+         Shopping: 0,
+         Entertainment: 0,
+         Health: 0,
+         Education: 0,
+         Other: 0,
+         Overall: 0, // add this to avoid undefined access
+       };
+
+       data.forEach((item) => {
+         if (spentBudgets.hasOwnProperty(item.category)) {
+           spentBudgets[item.category] += parseFloat(item.amount);
+          // console.log(item.category)
+         } else {
+           spentBudgets.Other += parseFloat(item.amount);
+         }
+         spentBudgets.Overall += parseFloat(item.amount)
+       });
+       setExpenseByCategory(spentBudgets)
+       console.log(spentBudgets);
+       
+     } catch (error) {
+       console.log("Error while fetching expenses ", error);
+     }
+  };
+
+  const arrowUpDown = (a,b) => {
+    if((a/b)*100 <= 50){
+      return "down"
+    }
+    else {
+      return "up"
+    }
+  }
+
   return (
     <div className="w-full ml-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -235,6 +295,7 @@ function Budget() {
               id="budget"
               type="number"
               value={budgetAmount}
+              min={0}
               className="border rounded-md p-2 w-full"
               onChange={(e) => setBudgetAmount(e.target.value)}
             />
@@ -278,7 +339,7 @@ function Budget() {
         <div className="flex flex-col sm:flex-row sm:justify-between mt-4 mb-4">
           <div className="flex flex-col mb-2 sm:mb-0">
             <div className="font-bold text-xl md:text-2xl">{`$${
-              parseFloat(budgets.Overall) * 0.7
+              parseFloat(expenseByCategory.Overall)
             }`}</div>
             <div className="text-gray-500 text-sm md:text-base">{`spent of $${parseFloat(
               budgets.Overall
@@ -286,12 +347,12 @@ function Budget() {
           </div>
           <div className="flex flex-col">
             <div className="font-bold text-xl md:text-2xl">{`$${
-              budgets.Overall - 0.7 * budgets.Overall
+              budgets.Overall - expenseByCategory.Overall
             }`}</div>
             <div className="text-gray-500 text-sm md:text-base">remaining</div>
           </div>
         </div>
-        <ProgressBar progress={70} />
+        <ProgressBar progress={(expenseByCategory.Overall/budgets.Overall)*100} />
         <div className="flex justify-end">
           <button className="border rounded-md p-2 mt-4 font-semibold text-sm md:text-base">
             Edit Budget
@@ -310,30 +371,30 @@ function Budget() {
             {
               name: "Food",
               budget: budgets.Food,
-              spent: budgets.Food * 0.8,
-              progress: 80,
-              trending: "down",
+              spent: expenseByCategory.Food,
+              progress: (expenseByCategory.Food/budgets.Food)*100,
+              trending: arrowUpDown(expenseByCategory.Food,budgets.Food),
             },
             {
               name: "Transport",
               budget: budgets.Transport,
-              spent: budgets.Transport * 0.6,
-              progress: 60,
-              trending: "down",
+              spent: expenseByCategory.Transport,
+              progress: (expenseByCategory.Transport/budgets.Transport)*100,
+              trending: arrowUpDown(expenseByCategory.Transport,budgets.Transport),
             },
             {
               name: "Bills",
               budget: budgets.Bills,
-              spent: budgets.Bills * 0.9,
-              progress: 90,
-              trending: "down",
+              spent: expenseByCategory.Bills,
+              progress: (expenseByCategory.Bills/budgets.Bills)*100,
+              trending: arrowUpDown(expenseByCategory.Bills,budgets.Bills),
             },
             {
               name: "Shopping",
               budget: budgets.Shopping,
-              spent: budgets.Shopping * 0.9,
-              progress: 140,
-              trending: "up",
+              spent: expenseByCategory.Shopping,
+              progress: (expenseByCategory.Shopping/budgets.Shopping)*100,
+              trending: arrowUpDown(expenseByCategory.Shopping,budgets.Shopping),
             },
           ].map((category, index) => (
             <div key={index} className="mb-4 pb-2 border-b last:border-b-0">

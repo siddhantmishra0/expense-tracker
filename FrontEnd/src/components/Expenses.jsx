@@ -11,15 +11,8 @@ function Expenses() {
   const [category, setCategory] = useState("Food");
   const [tags, setTags] = useState("");
   const [userId, setUserId] = useState("");
-
-  // useEffect(() => {
-  //   // axios.get("http://localhost:3000/home/expense",{withCredentials: true})
-  //   // .then((res)=> {
-  //   //   setExpenses(res.data)
-  //   // })
-  //   // .catch((error)=> console.log("Error while fetching expenses ",error))
-  //   fetchExpenses();
-  // }, []);
+  const [budget, setBudget] = useState([]);
+  const [budgetError, setBudgetError] = useState("");
 
   useEffect(() => {
     axios
@@ -43,112 +36,110 @@ function Expenses() {
     }
   };
 
+  const fetchBudget = async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/home/budget?userId=${userId}`,
+        { withCredentials: true }
+      );
+      setBudget(res.data);
+    } catch (error) {
+      console.log("Error while fetching budgets ", error);
+    }
+  };
+
   useEffect(() => {
-    if (userId) fetchExpenses();
+    if (userId) {
+      fetchExpenses();
+      fetchBudget();
+    }
   }, [userId]);
 
-  // const fetchExpenses = async () => {
-  //   axios.get("http://localhost:3000/home/expense", {
-  //       withCredentials: true,
-  //     })
-  //     .then((res) => setExpenses(res.data))
-  //     .catch((error) => console.log("Error while fetching expenses ", error));
-  // };
+  // Calculate total spent for a specific category
+  const getTotalSpentForCategory = (categoryName) => {
+    return expenses
+      .filter((expense) => expense.category === categoryName)
+      .reduce((total, expense) => total + expense.amount, 0);
+  };
 
-  // useEffect(() => {
-  //   const savedExpenses = localStorage.getItem('expenses');
-  //   if (savedExpenses) {
-  //     setExpenses(JSON.parse(savedExpenses));
-  //   }
-  // }, []);
+  // Get budget limit for a specific category
+  const getBudgetForCategory = (categoryName) => {
+    const categoryBudget = budget.find((b) => b.category === categoryName);
+    return categoryBudget ? categoryBudget.amount : 0;
+  };
 
-  // useEffect(() => {
-  //   localStorage.setItem('expenses', JSON.stringify(expenses));
-  // }, [expenses]);
+  // Check if adding this expense would exceed the budget
+  const validateBudget = (categoryName, expenseAmount) => {
+    const currentSpent = getTotalSpentForCategory(categoryName);
+    const budgetLimit = getBudgetForCategory(categoryName);
+    const newTotal = currentSpent + expenseAmount;
+
+    if (budgetLimit === 0) {
+      return {
+        isValid: false,
+        message: `No budget set for ${categoryName} category. Please set a budget first.`,
+      };
+    }
+
+    if (newTotal > budgetLimit) {
+      const remaining = budgetLimit - currentSpent;
+      return {
+        isValid: false,
+        message: `This expense would exceed your ${categoryName} budget. Budget: $${budgetLimit}, Already spent: $${currentSpent}, Remaining: $${remaining}`,
+      };
+    }
+
+    return { isValid: true, message: "" };
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // const newExpense = {
-    //   id: uuidv4(),
-    //   description,
-    //   amount: parseFloat(amount),
-    //   date,
-    //   category,
-    //   tags: tags.split(",").map((tag) => tag.trim()),
-    // };
-    // const newExpense = {
-    //   id: uuidv4(),
-    //   description,
-    //   amount: parseFloat(amount),
-    //   date,
-    //   category,
-    //   tags: tags.split(",").map(tag => tag.trim())
-    // };
-    try {
-      axios
-        .post(
-          "http://localhost:3000/home/expense",
-          {
-            //   id: uuidv4(),
-            // description,
-            // amount: parseFloat(amount),
-            // date,
-            // category,
-            // tags: tags.split(",").map(tag => tag.trim())
-            // },
-            // id: uuidv4(),
-            description,
-            amount: parseFloat(amount),
-            date,
-            category,
-            tags: tags.split(",").map((tag) => tag.trim()),
-            userId,
-          },
-          {
-            withCredentials: true,
-          }
-        )
-        .then(() => {
-          // console.log(newExpense);
-          // console.log(result)
-          setDescription("");
-          setAmount("");
-          setDate("");
-          setCategory("Food");
-          setTags("");
-          fetchExpenses();
-          // setExpenses((prevExpense) => [...prevExpense, newExpense]);
+    setBudgetError("");
 
-          // console.log(expenses);
-        })
-        .catch((error) => {
-          console.log("Error while posting expense ", error);
-        });
-      // if(response.data.expense){
-      //   setExpenses(prevExpense => [...prevExpense,response.data.expense])
-      // }else {
-      // console.log(newExpense)
+    const expenseAmount = parseFloat(amount);
 
-      // }
-      // console.log("Expense added successfully ",response.data);
-    } catch (error) {
-      console.error("Error adding expense:", error);
+    // Validate budget before submitting
+    const validation = validateBudget(category, expenseAmount);
+
+    if (!validation.isValid) {
+      setBudgetError(validation.message);
+      return;
     }
 
-    // try {
-    // axios.post("http://localhost:3000/home/expense",{...newExpense})
-    // .then((result)=>{
-    //   console.log("Expenses added ",result)
-    //   setExpenses([...expenses, newExpense]);
-    // })
-    // .catch((error)=>{
-    //   console.log("Error setting expense ",error)
-    // })
-    // } catch (error) {
-    // console.error("Error while adding expense ",error)
-    // }
-    // Reset form
+    try {
+      await axios.post(
+        "http://localhost:3000/home/expense",
+        {
+          description,
+          amount: expenseAmount,
+          date,
+          category,
+          tags: tags.split(",").map((tag) => tag.trim()),
+          userId,
+          budget,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      // Reset form
+      setDescription("");
+      setAmount("");
+      setDate("");
+      setCategory("Food");
+      setTags("");
+      setBudgetError("");
+
+      // Refresh data
+      fetchExpenses();
+      fetchBudget();
+    } catch (error) {
+      console.log("Error while posting expense ", error);
+    }
   };
+
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this expense? "
@@ -159,16 +150,45 @@ function Expenses() {
         withCredentials: true,
       });
       setExpenses(expenses.filter((expense) => expense._id !== id));
+      fetchBudget(); // Refresh budget data after deletion
     } catch (error) {
       console.log("Error in deleting expense ", error);
     }
   };
+
+  // Get remaining budget for selected category
+  const getRemainingBudget = () => {
+    if (!category) return 0;
+    const spent = getTotalSpentForCategory(category);
+    const budgetLimit = getBudgetForCategory(category);
+    return Math.max(0, budgetLimit - spent);
+  };
+
   return (
-    <div className=" w-full ml-5">
+    <div className="w-full ml-5">
       <div className="border w-full p-4 rounded-md mb-6">
         <h2 className="font-semibold text-xl md:text-2xl mb-4">
           Add New Expense
         </h2>
+
+        {/* Budget Information */}
+        {category && (
+          <div className="mb-4 p-3 bg-blue-50 rounded-md">
+            <p className="text-sm text-blue-800">
+              <strong>{category} Budget:</strong> $
+              {getBudgetForCategory(category)} |<strong> Spent:</strong> $
+              {getTotalSpentForCategory(category)} |<strong> Remaining:</strong>{" "}
+              ${getRemainingBudget()}
+            </p>
+          </div>
+        )}
+
+        {/* Budget Error Message */}
+        {budgetError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-700 text-sm">{budgetError}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           {/* First row of inputs */}
@@ -194,6 +214,8 @@ function Expenses() {
               <input
                 type="number"
                 id="amount"
+                step="0.01"
+                min="0"
                 className="border rounded-md p-2 w-full"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -226,7 +248,10 @@ function Expenses() {
                 id="category"
                 className="border rounded-md p-2 w-full"
                 value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                onChange={(e) => {
+                  setCategory(e.target.value);
+                  setBudgetError(""); // Clear error when category changes
+                }}
               >
                 <option value="Food">Food</option>
                 <option value="Transport">Transport</option>
@@ -280,7 +305,7 @@ function Expenses() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-full">
-              <thead className="bg-gray-100 ">
+              <thead className="bg-gray-100">
                 <tr>
                   <th className="p-2 text-left">Description</th>
                   <th className="p-2 text-left">Amount</th>
@@ -297,7 +322,9 @@ function Expenses() {
                   <tr key={expense._id} className="border-b">
                     <td className="p-2">{expense.description}</td>
                     <td className="p-2">${expense.amount}</td>
-                    <td className="p-2 hidden sm:table-cell">{new Date(expense.date).toLocaleDateString("en-GB")}</td>
+                    <td className="p-2 hidden sm:table-cell">
+                      {new Date(expense.date).toLocaleDateString("en-GB")}
+                    </td>
                     <td className="p-2 hidden md:table-cell">
                       {expense.category}
                     </td>
