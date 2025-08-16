@@ -312,7 +312,9 @@ const postExpenses = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     // console.log(req.body);
-
+    // budget.forEach((item)=> {
+    //   if()
+    // })
     const newExpense = new ExpenseModel({
       description,
       amount: parseFloat(amount),

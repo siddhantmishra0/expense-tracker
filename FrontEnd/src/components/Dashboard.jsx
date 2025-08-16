@@ -12,7 +12,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-
+import axios from "axios";
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -25,10 +25,14 @@ ChartJS.register(
   ArcElement
 );
 
+
 function Dashboard() {
   const [isOverBudget, setIsOverBudget] = useState(false);
   const [budgetPercentage, setBudgetPercentage] = useState(71);
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const [expenses,setExpenses] = useState([])
+  const [userId,setUserId] = useState("")
+  
 
   // Track window size for responsive adjustments
   useEffect(() => {
@@ -36,11 +40,40 @@ function Dashboard() {
       setWindowWidth(window.innerWidth);
     };
 
+      
+
+
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
   }, []);
+
+   useEffect(() => {
+     axios
+       .get("http://localhost:3000/login", {
+         withCredentials: true,
+       })
+       .then((response) => setUserId(response.data.user._id))
+       .catch((error) => console.log("Fetch error: ", error));
+   }, []);
+
+  const fetchExpenses = async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/home/expense?userId=${userId}`,
+        { withCredentials: true }
+      );
+      setExpenses(res.data);      
+    } catch (error) {
+      console.log("Error while fetching expenses ", error);
+    }
+  };
+  
+  useEffect(()=>{
+    fetchExpenses()
+  },[userId])
 
   const CategoryData = {
     labels: ["Food", "Transport", "Bills", "Shopping", "Other"],
