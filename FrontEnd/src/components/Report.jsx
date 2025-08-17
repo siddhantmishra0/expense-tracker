@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
+import axios from "axios"; // Make sure to import axios
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,8 +12,6 @@ import {
   Tooltip,
   Legend,
   ArcElement,
-  plugins,
-  scales,
 } from "chart.js";
 import { Pie, Line, Bar } from "react-chartjs-2";
 
@@ -36,75 +35,183 @@ function Report(props) {
   const [dateFrom, setDateFrom] = React.useState("2025-01-01");
   const [dateTo, setDateTo] = React.useState("2025-03-31");
   const [buttonType, setButtonType] = useState("Summary");
+  const [userId, setUserId] = useState("");
+  const [expenses, setExpenses] = useState([]);
 
   const chartRef = React.useRef(null);
   const chartInstanceRef = React.useRef(null);
 
+  // Fetch user ID
+  useEffect(() => {
+    axios
+      .get("http://localhost:3000/login", {
+        withCredentials: true,
+      })
+      .then((response) => setUserId(response.data.user._id))
+      .catch((error) => console.log("Fetch error: ", error));
+  }, []);
+
+  // Fetch expenses when userId changes
+  useEffect(() => {
+    if (userId) {
+      fetchExpenses();
+    }
+  }, [userId]);
+
+  const fetchExpenses = async () => {
+    if (!userId) return;
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/home/expense?userId=${userId}`,
+        { withCredentials: true }
+      );
+      setExpenses(res.data);
+    } catch (error) {
+      console.log("Error while fetching expenses ", error);
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (chartInstanceRef.current) {
-        chartInstanceRef.current.destroy();
-        chartInstanceRef.current = null;
+        try {
+          chartInstanceRef.current.destroy();
+        } catch (error) {
+          console.log("Error destroying chart on cleanup:", error);
+        } finally {
+          chartInstanceRef.current = null;
+        }
       }
     };
   }, []);
 
-  // Fetch data whenever reportType, dateFrom, or dateTo changes
+  // Fetch data whenever reportType, dateFrom, dateTo, or expenses changes
   useEffect(() => {
     if (chartInstanceRef.current) {
-      chartInstanceRef.current.destroy();
-      chartInstanceRef.current = null;
+      try {
+        chartInstanceRef.current.destroy();
+      } catch (error) {
+        console.log("Error destroying chart:", error);
+      } finally {
+        chartInstanceRef.current = null;
+      }
     }
-    fetchReportData();
-  }, [reportType, dateFrom, dateTo]);
-  
-  const fetchReportData = async () => {
+    if (expenses.length > 0) {
+      // Add a small delay to ensure DOM is ready
+      setTimeout(() => {
+        processExpenseData();
+      }, 100);
+    }
+  }, [reportType, dateFrom, dateTo, expenses]);
+
+  // Helper function to filter expenses by date range
+  const filterExpensesByDateRange = (expenses, fromDate, toDate) => {
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    to.setHours(23, 59, 59, 999); // Include the entire end date
+
+    return expenses.filter((expense) => {
+      const expenseDate = new Date(expense.date || expense.createdAt);
+      return expenseDate >= from && expenseDate <= to;
+    });
+  };
+
+  // Helper function to group expenses by category
+  const groupExpensesByCategory = (expenses) => {
+    const categoryTotals = {};
+    expenses.forEach((expense) => {
+      const category = expense.category || "Other";
+      categoryTotals[category] =
+        (categoryTotals[category] || 0) + (expense.amount || 0);
+    });
+    return categoryTotals;
+  };
+
+  // Helper function to group expenses by month
+  const groupExpensesByMonth = (expenses) => {
+    const monthTotals = {};
+    expenses.forEach((expense) => {
+      const date = new Date(expense.date || expense.createdAt);
+      const monthKey = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, "0")}`;
+      monthTotals[monthKey] =
+        (monthTotals[monthKey] || 0) + (expense.amount || 0);
+    });
+    return monthTotals;
+  };
+
+  // Helper function to group expenses by week
+  const groupExpensesByWeek = (expenses) => {
+    const weekTotals = {};
+    expenses.forEach((expense) => {
+      const date = new Date(expense.date || expense.createdAt);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay()); // Get start of week (Sunday)
+      const weekKey = weekStart.toISOString().split("T")[0];
+      weekTotals[weekKey] = (weekTotals[weekKey] || 0) + (expense.amount || 0);
+    });
+    return weekTotals;
+  };
+
+  const processExpenseData = async () => {
     setLoading(true);
     try {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // Filter expenses by date range
+      const filteredExpenses = filterExpensesByDateRange(
+        expenses,
+        dateFrom,
+        dateTo
+      );
 
       if (reportType === "By category") {
+        const categoryData = groupExpensesByCategory(filteredExpenses);
+        const labels = Object.keys(categoryData);
+        const data = Object.values(categoryData);
+
+        const colors = [
+          "rgba(255, 99, 132, 0.5)",
+          "rgba(54, 162, 235, 0.5)",
+          "rgba(255, 206, 86, 0.5)",
+          "rgba(75, 192, 192, 0.5)",
+          "rgba(153, 102, 255, 0.5)",
+          "rgba(255, 159, 64, 0.5)",
+          "rgba(199, 199, 199, 0.5)",
+          "rgba(83, 102, 255, 0.5)",
+        ];
+
+        const borderColors = colors.map((color) => color.replace("0.5", "1"));
+
         setChartData({
-          labels: [
-            "Food",
-            "Transport",
-            "Bills",
-            "Shopping",
-            "Entertainment",
-            "Other",
-          ],
+          labels: labels,
           datasets: [
             {
               label: "Expenses by Category",
-              data: [350, 150, 280, 200, 120, 80],
-              backgroundColor: [
-                "rgba(255, 99, 132, 0.5)",
-                "rgba(54, 162, 235, 0.5)",
-                "rgba(255, 206, 86, 0.5)",
-                "rgba(75, 192, 192, 0.5)",
-                "rgba(153, 102, 255, 0.5)",
-                "rgba(255, 159, 64, 0.5)",
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 1)",
-                "rgba(54, 162, 235, 1)",
-                "rgba(255, 206, 86, 1)",
-                "rgba(75, 192, 192, 1)",
-                "rgba(153, 102, 255, 1)",
-                "rgba(255, 159, 64, 1)",
-              ],
+              data: data,
+              backgroundColor: colors.slice(0, labels.length),
+              borderColor: borderColors.slice(0, labels.length),
               borderWidth: 1,
             },
           ],
         });
       } else if (reportType === "Monthly Trend") {
+        const monthData = groupExpensesByMonth(filteredExpenses);
+        const sortedMonths = Object.keys(monthData).sort();
+        const labels = sortedMonths.map((month) => {
+          const date = new Date(month + "-01");
+          return date.toLocaleDateString("en-US", {
+            month: "short",
+            year: "2-digit",
+          });
+        });
+        const data = sortedMonths.map((month) => monthData[month]);
+
         setChartData({
-          labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+          labels: labels,
           datasets: [
             {
               label: "Monthly Expenses",
-              data: [750, 820, 880, 790, 850, 910],
+              data: data,
               borderColor: "rgb(99, 102, 241)",
               backgroundColor: "rgba(99, 102, 241, 0.5)",
               tension: 0.3,
@@ -112,12 +219,17 @@ function Report(props) {
           ],
         });
       } else if (reportType === "Weekly Trend") {
+        const weekData = groupExpensesByWeek(filteredExpenses);
+        const sortedWeeks = Object.keys(weekData).sort();
+        const labels = sortedWeeks.map((week, index) => `Week ${index + 1}`);
+        const data = sortedWeeks.map((week) => weekData[week]);
+
         setChartData({
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+          labels: labels,
           datasets: [
             {
               label: "Weekly Expenses",
-              data: [210, 280, 190, 240],
+              data: data,
               backgroundColor: "rgba(99, 102, 241, 0.5)",
               borderColor: "rgb(99, 102, 241)",
               borderWidth: 1,
@@ -126,14 +238,14 @@ function Report(props) {
         });
       }
     } catch (error) {
-      console.error("Error fetching report data:", error);
+      console.error("Error processing expense data:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const getChart = (chart) => {
-    if (chart) {
+    if (chart && chart.canvas) {
       chartInstanceRef.current = chart;
     }
   };
@@ -148,9 +260,9 @@ function Report(props) {
         labels: {
           boxWidth: 10,
           font: {
-            size: window.innerWidth < 768 ? 10 : 12
-          }
-        }
+            size: window.innerWidth < 768 ? 10 : 12,
+          },
+        },
       },
       title: {
         display: true,
@@ -158,8 +270,8 @@ function Report(props) {
           reportType.charAt(0).toUpperCase() + reportType.slice(1)
         })`,
         font: {
-          size: window.innerWidth < 768 ? 14 : 16
-        }
+          size: window.innerWidth < 768 ? 14 : 16,
+        },
       },
     },
   };
@@ -171,51 +283,141 @@ function Report(props) {
       );
     }
 
-    if (!chartData) {
+    if (!chartData || !chartData.datasets[0].data.length) {
       return (
         <div className="flex items-center justify-center h-64">
-          No data available
+          No data available for selected date range
         </div>
       );
     }
 
+    // Add key to force re-render when chart type changes
+    const chartKey = `${reportType}-${dateFrom}-${dateTo}`;
+
     switch (reportType) {
       case "By category":
-        return <Pie ref={getChart} data={chartData} options={chartOptions} />;
+        return (
+          <Pie
+            key={chartKey}
+            ref={getChart}
+            data={chartData}
+            options={chartOptions}
+          />
+        );
       case "Monthly Trend":
-        return <Line ref={getChart} data={chartData} options={chartOptions} />;
+        return (
+          <Line
+            key={chartKey}
+            ref={getChart}
+            data={chartData}
+            options={chartOptions}
+          />
+        );
       case "Weekly Trend":
-        return <Bar ref={getChart} data={chartData} options={chartOptions} />;
+        return (
+          <Bar
+            key={chartKey}
+            ref={getChart}
+            data={chartData}
+            options={chartOptions}
+          />
+        );
       default:
-        return <Pie ref={getChart} data={chartData} options={chartOptions} />;
+        return (
+          <Pie
+            key={chartKey}
+            ref={getChart}
+            data={chartData}
+            options={chartOptions}
+          />
+        );
     }
   };
 
-  const reportData = {
-    labels: [
-      "Food",
-      "Transport",
-      "Bills",
-      "Shopping",
-      "Entertainment",
-      "Other",
-    ],
-    datasets: [
-      {
-        label: "Previous Month",
-        data: [320, 140, 280, 180, 150, 70],
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
-        borderColor: "rgb(75, 192, 192)",
-        borderWidth: 1,
+  // Calculate summary data from actual expenses
+  const calculateSummaryData = () => {
+    const filteredExpenses = filterExpensesByDateRange(
+      expenses,
+      dateFrom,
+      dateTo
+    );
+    const totalExpenses = filteredExpenses.reduce(
+      (sum, expense) => sum + (expense.amount || 0),
+      0
+    );
+    const averageDaily =
+      totalExpenses /
+      Math.max(
+        1,
+        Math.ceil(
+          (new Date(dateTo) - new Date(dateFrom)) / (1000 * 60 * 60 * 24)
+        )
+      );
+    const highestExpense = filteredExpenses.reduce(
+      (max, expense) =>
+        (expense.amount || 0) > (max.amount || 0) ? expense : max,
+      { amount: 0 }
+    );
+
+    return {
+      totalExpenses: totalExpenses.toFixed(2),
+      averageDaily: averageDaily.toFixed(2),
+      highestExpense: {
+        amount: (highestExpense.amount || 0).toFixed(2),
+        category: highestExpense.category || "N/A",
+        description: highestExpense.description || "N/A",
       },
-      {
-        label: "Current Month",
-        data: [350, 150, 280, 200, 120, 80],
-        backgroundColor: "rgba(153, 102, 255, 0.5)",
-        borderColor: "rgb(153, 102, 255)",
-        borderWidth: 1,
-      },
-    ],
+    };
+  };
+
+  // Calculate comparison data (current vs previous period)
+  const calculateComparisonData = () => {
+    const currentPeriodExpenses = filterExpensesByDateRange(
+      expenses,
+      dateFrom,
+      dateTo
+    );
+
+    // Calculate previous period dates
+    const currentStart = new Date(dateFrom);
+    const currentEnd = new Date(dateTo);
+    const periodLength = currentEnd - currentStart;
+    const previousStart = new Date(currentStart.getTime() - periodLength);
+    const previousEnd = new Date(currentStart.getTime() - 1);
+
+    const previousPeriodExpenses = filterExpensesByDateRange(
+      expenses,
+      previousStart.toISOString().split("T")[0],
+      previousEnd.toISOString().split("T")[0]
+    );
+
+    const currentData = groupExpensesByCategory(currentPeriodExpenses);
+    const previousData = groupExpensesByCategory(previousPeriodExpenses);
+
+    // Get all unique categories
+    const allCategories = [
+      ...new Set([...Object.keys(currentData), ...Object.keys(previousData)]),
+    ];
+
+    return {
+      labels: allCategories,
+      datasets: [
+        {
+          label: "Previous Period",
+          data: allCategories.map((cat) => previousData[cat] || 0),
+          backgroundColor: "rgba(75, 192, 192, 0.5)",
+          borderColor: "rgb(75, 192, 192)",
+          borderWidth: 1,
+        },
+        {
+          label: "Current Period",
+          data: allCategories.map((cat) => currentData[cat] || 0),
+          backgroundColor: "rgba(153, 102, 255, 0.5)",
+          borderColor: "rgb(153, 102, 255)",
+          borderWidth: 1,
+        },
+      ],
+    };
   };
 
   const reportOptions = {
@@ -227,16 +429,16 @@ function Report(props) {
         labels: {
           boxWidth: 10,
           font: {
-            size: window.innerWidth < 768 ? 10 : 12
-          }
-        }
+            size: window.innerWidth < 768 ? 10 : 12,
+          },
+        },
       },
       title: {
         display: true,
-        text: "Month-to-Month Comparison",
+        text: "Period Comparison",
         font: {
-          size: window.innerWidth < 768 ? 14 : 16
-        }
+          size: window.innerWidth < 768 ? 14 : 16,
+        },
       },
     },
     scales: {
@@ -251,58 +453,120 @@ function Report(props) {
   };
 
   const renderReport = () => {
+    const summaryData = calculateSummaryData();
+
     switch (buttonType) {
       case "Summary":
         return (
           <div>
-            <div className="font-semibold text-xl md:text-2xl">Expense Summary</div>
+            <div className="font-semibold text-xl md:text-2xl">
+              Expense Summary
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Total Expenses</div>
-                <div className="font-bold text-xl md:text-2xl">$1,180.00</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Total Expenses
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.totalExpenses}
+                </div>
               </div>
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Average Daily</div>
-                <div className="font-bold text-xl md:text-2xl">$39.33</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Average Daily
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.averageDaily}
+                </div>
               </div>
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Highest Expense</div>
-                <div className="font-bold text-xl md:text-2xl">$280.00</div>
-                <div className="text-gray-500 text-sm md:text-base">Bills (Rent)</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Highest Expense
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.highestExpense.amount}
+                </div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  {summaryData.highestExpense.category}
+                </div>
               </div>
             </div>
           </div>
         );
       case "Comparision":
+        const comparisonData = calculateComparisonData();
         return (
           <div>
             <div className="font-semibold text-xl md:text-2xl">
-              Month-to-Month Comparison
+              Period Comparison
             </div>
             <div className="h-64 mt-4">
-              <Bar data={reportData} options={reportOptions} />
+              <Bar data={comparisonData} options={reportOptions} />
             </div>
           </div>
         );
       case "Insights":
+        const filteredExpenses = filterExpensesByDateRange(
+          expenses,
+          dateFrom,
+          dateTo
+        );
+        const categoryData = groupExpensesByCategory(filteredExpenses);
+        const totalAmount = Object.values(categoryData).reduce(
+          (sum, amount) => sum + amount,
+          0
+        );
+        const topCategory = Object.entries(categoryData).reduce(
+          (max, [cat, amount]) =>
+            amount > max.amount ? { category: cat, amount } : max,
+          { category: "N/A", amount: 0 }
+        );
+
         return (
           <div>
-            <div className="font-semibold text-xl md:text-2xl">Spending Insights</div>
+            <div className="font-semibold text-xl md:text-2xl">
+              Spending Insights
+            </div>
             <div className="grid grid-cols-1 gap-4 mt-4">
               <div className="rounded-md p-4 bg-gray-100">
-                <div className="font-semibold text-sm md:text-base">Top Spending Category</div>
-                <div className="font-bold text-xl md:text-2xl">Food ($350.00)</div>
-                <div className="text-gray-500 text-sm md:text-base">29.7% of total expenses</div>
+                <div className="font-semibold text-sm md:text-base">
+                  Top Spending Category
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  {topCategory.category} (${topCategory.amount.toFixed(2)})
+                </div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  {totalAmount > 0
+                    ? ((topCategory.amount / totalAmount) * 100).toFixed(1)
+                    : 0}
+                  % of total expenses
+                </div>
               </div>
               <div className="rounded-md p-4 bg-gray-100">
-                <div className="font-semibold text-sm md:text-base">Unusual Spending</div>
-                <div className="font-bold text-xl md:text-2xl">Shopping increased by 11%</div>
-                <div className="text-gray-500 text-sm md:text-base">Compared to your monthly average</div>
+                <div className="font-semibold text-sm md:text-base">
+                  Total Categories
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  {Object.keys(categoryData).length} categories
+                </div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Across {filteredExpenses.length} transactions
+                </div>
               </div>
               <div className="rounded-md p-4 bg-gray-100">
-                <div className="font-semibold text-sm md:text-base">Saving Opportunity</div>
-                <div className="font-bold text-xl md:text-2xl">Entertainment ($120.00)</div>
-                <div className="text-gray-500 text-sm md:text-base">Consider reducing to meet your savings goal</div>
+                <div className="font-semibold text-sm md:text-base">
+                  Period Range
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  {Math.ceil(
+                    (new Date(dateTo) - new Date(dateFrom)) /
+                      (1000 * 60 * 60 * 24)
+                  )}{" "}
+                  days
+                </div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  From {dateFrom} to {dateTo}
+                </div>
               </div>
             </div>
           </div>
@@ -310,20 +574,36 @@ function Report(props) {
       default:
         return (
           <div>
-            <div className="font-semibold text-xl md:text-2xl">Expense Summary</div>
+            <div className="font-semibold text-xl md:text-2xl">
+              Expense Summary
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Total Expenses</div>
-                <div className="font-bold text-xl md:text-2xl">$1,180.00</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Total Expenses
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.totalExpenses}
+                </div>
               </div>
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Average Daily</div>
-                <div className="font-bold text-xl md:text-2xl">$39.33</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Average Daily
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.averageDaily}
+                </div>
               </div>
               <div className="rounded-md bg-gray-100 p-4">
-                <div className="text-gray-500 text-sm md:text-base">Highest Expense</div>
-                <div className="font-bold text-xl md:text-2xl">$280.00</div>
-                <div className="text-gray-500 text-sm md:text-base">Bills (Rent)</div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  Highest Expense
+                </div>
+                <div className="font-bold text-xl md:text-2xl">
+                  ${summaryData.highestExpense.amount}
+                </div>
+                <div className="text-gray-500 text-sm md:text-base">
+                  {summaryData.highestExpense.category}
+                </div>
               </div>
             </div>
           </div>
@@ -335,11 +615,13 @@ function Report(props) {
     <div className="w-full px-2 md:pl-5">
       <div className="flex flex-col">
         <div className="border rounded-md p-4 md:p-6">
-          <div className="font-semibold text-xl md:text-2xl">Expense Reports</div>
+          <div className="font-semibold text-xl md:text-2xl">
+            Expense Reports
+          </div>
           <div className="text-sm md:text-base text-gray-500">
             Visualize your spending patterns
           </div>
-          
+
           <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 mt-4">
             <div className="flex items-center gap-2 w-full md:w-auto">
               <input
@@ -367,10 +649,10 @@ function Report(props) {
               <option value="Weekly Trend">Weekly Trend</option>
             </select>
           </div>
-          
+
           <div className="h-64 md:h-80 mt-6">{renderChart()}</div>
         </div>
-        
+
         <div className="grid grid-cols-3 w-full rounded-md mt-4 bg-gray-100">
           <button
             value="Summary"
@@ -400,7 +682,7 @@ function Report(props) {
             Insights
           </button>
         </div>
-        
+
         <div className="border rounded-md p-4 md:p-6 mt-4">
           {renderReport()}
         </div>
