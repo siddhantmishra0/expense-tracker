@@ -20,5 +20,6 @@ export const verifyJWT =  async (req,res,next) => {
         // throw new ApiError(401,error?.message || "Invalid access token")
         console.log("Verification failed ",error)
         return res.status(401).json({error: "Unsuccesssful verification"})
+        
     }
 }

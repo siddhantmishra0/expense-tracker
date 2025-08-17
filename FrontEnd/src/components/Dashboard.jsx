@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { TrendingUp, Calendar, DollarSign, TrendingDown,Wallet } from "lucide-react";
+import {
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  TrendingDown,
+  Wallet,
+} from "lucide-react";
 import { Line, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -52,7 +58,10 @@ function Dashboard() {
         withCredentials: true,
       })
       .then((response) => setUserId(response.data.user._id))
-      .catch((error) => console.log("Fetch error: ", error));
+      .catch((error) => {
+        console.log("Fetch error: ", error);
+        window.location.href = "/";
+      });
   }, []);
 
   const fetchExpenses = async () => {
@@ -92,7 +101,6 @@ function Dashboard() {
 
   // Calculate total expenses
   const getTotalExpenses = () => {
-
     return expenses.reduce((total, expense) => total + expense.amount, 0);
   };
 
@@ -105,7 +113,7 @@ function Dashboard() {
       .filter((expense) => {
         const expenseDate = new Date(expense.date);
         // console.log(expense.date);
-        
+
         return (
           expenseDate.getMonth() === currentMonth &&
           expenseDate.getFullYear() === currentYear
@@ -114,18 +122,17 @@ function Dashboard() {
       .reduce((total, expense) => total + expense.amount, 0);
   };
 
-
   // Calculate total budget
   const getTotalBudget = () => {
-    if(budget.length>0){
-
-      const overallBudget = budget.find(budgetItem => budgetItem.category === "Overall")
+    if (budget.length > 0) {
+      const overallBudget = budget.find(
+        (budgetItem) => budgetItem.category === "Overall"
+      );
       // console.log(overallBudget);
-      
-      return overallBudget ? overallBudget.amount:0
-    }
-    else{
-      return 0
+
+      return overallBudget ? overallBudget.amount : 0;
+    } else {
+      return 0;
     }
   };
 
@@ -293,7 +300,7 @@ function Dashboard() {
       title: "Monthly Budget",
       value: `$${getTotalBudget().toFixed(2)}`,
       description: "Target Spending",
-      symbol: <Wallet className="text-orange-400"/>,
+      symbol: <Wallet className="text-orange-400" />,
     },
     {
       title: "Remaining Budget",

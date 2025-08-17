@@ -31,8 +31,11 @@ function Insights() {
         withCredentials: true,
       })
       .then((response) => setUserId(response.data.user._id))
-      .catch((error) => console.log("Fetch error: ", error));
-  }, []);
+      .catch((error) => {
+        console.log("Fetch error: ", error);
+        window.location.href = "/";
+      });
+    }, []);
 
   // Fetch expenses when userId changes
   useEffect(() => {

@@ -8,10 +8,30 @@ import Dashboard from "./components/Dashboard";
 import Budget from "./components/Budget";
 import Expenses from "./components/Expenses";
 import Report from "./components/Report";
-import Layout from "./components/Layout";
 import Insights from "./components/Insights";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function App() {
+    // const navigate = useNavigate();
+
+    useEffect(() => {
+      const handlePopState = () => {
+        // Clear access token from cookies/localStorage
+        // localStorage.removeItem("accessToken"); // if you’re storing it in localStorage
+        document.cookie = "accessToken=; Max-Age=0; path=/;"; // if in cookies
+
+        // Redirect to GettingStarted page
+        // navigate("/");
+        window.location.href ="/"
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }, []);
   return (
     <>
       <Toaster position="bottom-right" toastOptions={{ duration: 2000 }} />

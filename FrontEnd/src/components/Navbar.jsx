@@ -7,6 +7,7 @@ import Insights from "./Insights";
 import { useNavigate,Link, useLocation, Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 export default function Navbar() {
   const location = useLocation();
@@ -14,12 +15,18 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get("http://localhost:3000/login", {
+    axios
+      .get("http://localhost:3000/login", {
         withCredentials: true,
       })
       .then((response) => setUser(response.data.user.username))
-      .catch((error) => console.log("Fetch error: ", error));
-  }, []);
+      .catch((error) => {
+        console.log("Fetch error: ", error);
+        window.location.href = "/";
+        toast.success("Logged out successfully!");
+
+      });
+    }, []);
 
   const handleClick = (e) => {
     e.preventDefault();
@@ -31,6 +38,7 @@ export default function Navbar() {
         try {
           if (result.data === "Logged out successfully") {
             navigate("/");
+            toast.success("Logged out successfully");
           }
         } catch (error) {
           console.log("logout error ", error);

@@ -46,7 +46,13 @@ function Budget() {
         withCredentials: true,
       })
       .then((response) => setUserId(response.data.user._id))
-      .catch((error) => console.log("Fetch error: ", error));
+      .catch((error) => 
+      {
+        console.log("Fetch error: ", error)
+        window.location.href = "/";
+        
+      }
+      );
   }, []);
 
   const budgetData = {
