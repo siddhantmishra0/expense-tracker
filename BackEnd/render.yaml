@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: expensetracker-backend
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://your-frontend-app.vercel.app
+        # Replace with your actual Vercel domain
+      - key: DATABASE_URL
+        # Add your database connection string here
+        sync: false
+      - key: JWT_SECRET
+        # Add your JWT secret here
+        sync: false

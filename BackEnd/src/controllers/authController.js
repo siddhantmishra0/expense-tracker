@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import ExpenseModel from "../models/expense.model.js";
 import BudgetModel from "../models/budget.model.js";
+import mongoose from "mongoose";
 
 // const register = async (req, res) => {
 //   try {
@@ -272,19 +273,287 @@ const postBudget = async (req, res) => {
   }
 };
 
-const getBudget = async (req,res) => {
+
+
+
+// const postBudget = async (req, res) => {
+//   try {
+//     const { userId, budgetAmount, budgetType } = req.body;
+    
+//     // Input validation
+//     if (!userId || !budgetAmount || !budgetType) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Validate budgetAmount is a valid number
+//     const newBudgetAmount = parseFloat(budgetAmount);
+//     if (isNaN(newBudgetAmount) || newBudgetAmount < 0) {
+//       return res.status(400).json({ error: "Invalid budget amount" });
+//     }
+
+//     // Check if user exists
+//     const user = await UserModel.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Find existing budget for this category
+//     const existingBudget = await BudgetModel.findOne({ 
+//       userId, 
+//       category: budgetType 
+//     });
+
+//     let updatedBudget;
+//     let budgetDifference = newBudgetAmount;
+
+//     if (existingBudget) {
+//       // Calculate the difference from existing budget
+//       budgetDifference = newBudgetAmount - (existingBudget.amount || 0);
+      
+//       updatedBudget = await BudgetModel.findByIdAndUpdate(
+//         existingBudget._id,
+//         { amount: newBudgetAmount },
+//         { new: true }
+//       );
+//     } else {
+//       // Create new budget
+//       updatedBudget = new BudgetModel({
+//         userId,
+//         amount: newBudgetAmount,
+//         category: budgetType,
+//       });
+//       await updatedBudget.save();
+//     }
+
+//     // Handle overall budget update
+//     const overallCategory = await BudgetModel.findOne({ 
+//       userId, 
+//       category: "Overall" 
+//     });
+
+//     let overallBudget;
+    
+//     if (overallCategory) {
+//       // Safely calculate new overall amount
+//       const currentOverallAmount = overallCategory.amount || 0;
+//       const newOverallAmount = currentOverallAmount + budgetDifference;
+      
+//       overallBudget = await BudgetModel.findByIdAndUpdate(
+//         overallCategory._id,
+//         { amount: parseFloat(newOverallAmount) },
+//         { new: true }
+//       );
+//     } else {
+//       // Create new overall budget
+//       overallBudget = new BudgetModel({
+//         userId,
+//         amount: newBudgetAmount,
+//         category: "Overall"
+//       });
+//       await overallBudget.save();
+//     }
+
+//     console.log("Existing Budget:", existingBudget);
+//     console.log("Overall Budget:", overallBudget);
+//     console.log("Updated Budget:", updatedBudget);
+
+//     return res.status(200).json({ 
+//       success: true,
+//       newBudget: updatedBudget,
+//       overallBudget: overallBudget
+//     });
+
+//   } catch (error) {
+//     console.error("Budget creation error:", error);
+//     return res.status(500).json({ 
+//       error: "Budget creation failed", 
+//       details: error.message 
+//     });
+//   }
+// };
+
+
+// const postBudget = async (req, res) => {
+//   try {
+//     const { userId, budgetAmount, budgetType } = req.body;
+
+//     // Input validation
+//     if (!userId || !budgetAmount || !budgetType) {
+//       return res.status(400).json({ error: "Missing required fields" });
+//     }
+
+//     // Validate budgetAmount is a valid number
+//     const newBudgetAmount = parseFloat(budgetAmount);
+//     if (isNaN(newBudgetAmount) || newBudgetAmount < 0) {
+//       return res.status(400).json({ error: "Invalid budget amount" });
+//     }
+
+//     // Validate category
+//     const validCategories = [
+//       "Food",
+//       "Transport",
+//       "Bills",
+//       "Shopping",
+//       "Entertainment",
+//       "Health",
+//       "Education",
+//       "Other",
+//     ];
+//     if (!validCategories.includes(budgetType)) {
+//       return res.status(400).json({ error: "Invalid budget category" });
+//     }
+
+//     // Validate userId format
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       return res.status(400).json({ error: "Invalid user ID format" });
+//     }
+
+//     // Check if user exists
+//     const user = await UserModel.findById(userId);
+//     if (!user) {
+//       return res.status(404).json({ error: "User not found" });
+//     }
+
+//     // Find existing budget for this user and category (compound key)
+//     const existingBudget = await BudgetModel.findOne({
+//       userId: userId
+//     });
+
+//     let updatedBudget;
+//     let budgetDifference = newBudgetAmount;
+
+//     if (existingBudget) {
+//       // Calculate the difference from existing budget
+//       budgetDifference = newBudgetAmount - (existingBudget.amount || 0);
+
+//       // Update existing budget
+//       updatedBudget = await BudgetModel.findByIdAndUpdate(
+//         existingBudget._id,
+//         { amount: newBudgetAmount },
+//         { new: true, runValidators: true }
+//       );
+//     } else {
+//       // Create new budget for this user and category
+//       updatedBudget = new BudgetModel({
+//         userId: userId,
+//         amount: newBudgetAmount,
+//         category: budgetType,
+//       });
+//       await updatedBudget.save();
+//     }
+
+//     // Handle overall budget update for this specific user
+//     const overallCategory = await BudgetModel.findOne({
+//       userId: userId,
+//       category: "Overall",
+//     });
+
+//     let overallBudget;
+
+//     if (overallCategory) {
+//       // Safely calculate new overall amount
+//       const currentOverallAmount = overallCategory.amount || 0;
+//       const newOverallAmount = currentOverallAmount + budgetDifference;
+
+//       // Ensure overall amount doesn't go negative
+//       const finalOverallAmount = Math.max(newOverallAmount, 0);
+
+//       overallBudget = await BudgetModel.findByIdAndUpdate(
+//         overallCategory._id,
+//         { amount: finalOverallAmount },
+//         { new: true, runValidators: true }
+//       );
+//     } else {
+//       // Create new overall budget for this user
+//       overallBudget = new BudgetModel({
+//         userId: userId,
+//         amount: newBudgetAmount,
+//         category: "Overall",
+//       });
+//       await overallBudget.save();
+//     }
+
+//     console.log(`Budget operation for user ${userId}:`);
+//     console.log("Existing Budget:", existingBudget);
+//     console.log("Updated Budget:", updatedBudget);
+//     console.log("Overall Budget:", overallBudget);
+
+//     return res.status(200).json({
+//       success: true,
+//       message: existingBudget
+//         ? "Budget updated successfully"
+//         : "Budget created successfully",
+//       budget: updatedBudget,
+//       overallBudget: overallBudget,
+//       budgetDifference: budgetDifference,
+//     });
+//   } catch (error) {
+//     console.error("Budget operation error:", error);
+
+//     // Handle specific MongoDB errors
+//     if (error.code === 11000) {
+//       // Duplicate key error - this shouldn't happen with proper compound index
+//       // but handling it just in case
+//       return res.status(409).json({
+//         error: "Budget for this category already exists for this user",
+//         details: "Each user can have only one budget per category",
+//       });
+//     }
+
+//     if (error.name === "ValidationError") {
+//       return res.status(400).json({
+//         error: "Validation failed",
+//         details: error.message,
+//       });
+//     }
+
+//     if (error.name === "CastError") {
+//       return res.status(400).json({
+//         error: "Invalid data format",
+//         details: error.message,
+//       });
+//     }
+
+//     return res.status(500).json({
+//       error: "Budget operation failed",
+//       details: error.message,
+//     });
+//   }
+// };
+// const getBudget = async (req,res) => {
+//   try {
+//     const {userId} = req.query;
+//     if(!userId) {
+//       return res.status(400).json({error: "Missing userId in query"});
+//     }
+//     const budgets = await BudgetModel.find({userId});
+//     res.status(200).json(budgets)
+//   } catch (error) {
+//     console.log("Error fetching budgets: ",error)
+//     res.status(500).json({error: "Server error fetching budgets"})
+//   }
+// }
+const getBudget = async (req, res) => {
   try {
-    const {userId} = req.query;
-    if(!userId) {
-      return res.status(400).json({error: "Missing userId in query"});
+    const { userId } = req.query;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
     }
-    const budgets = await BudgetModel.find({userId});
-    res.status(200).json(budgets)
+
+    const budgets = await BudgetModel.find({ userId: userId }).sort({
+      category: 1,
+    });
+
+    return res.status(200).json(budgets);
   } catch (error) {
-    console.log("Error fetching budgets: ",error)
-    res.status(500).json({error: "Server error fetching budgets"})
+    console.error("Error fetching user budgets:", error);
+    return res.status(500).json({
+      error: "Failed to fetch budgets",
+      details: error.message,
+    });
   }
-}
+};
 
 const getExpenses = async (req, res) => {
   try {

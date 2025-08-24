@@ -106,7 +106,7 @@ function Expenses() {
     const validation = validateBudget(category, expenseAmount);
 
     if (!validation.isValid) {
-      setBudgetError(validation.message);
+      setBudgetError(validation.message);   
       return;
     }
 
