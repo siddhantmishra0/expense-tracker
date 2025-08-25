@@ -3,9 +3,15 @@ import cors from "cors"
 import cookieParser  from "cookie-parser"
 import UserRouter from "./routes/authRoutes.js"
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 dotenv.config({
-  path: "../.env"
-})
+  path: join(__dirname, "../.env"), // More reliable path resolution
+});
 const app = express()
 app.use(cors({
   origin: [process.env.FRONTEND_URL], // allow both local & deployed frontend
