@@ -4,7 +4,7 @@ import cookieParser  from "cookie-parser"
 import UserRouter from "./routes/authRoutes.js"
 import dotenv from "dotenv";
 dotenv.config({
-  path: "./env"
+  path: "../.env"
 })
 const app = express()
 app.use(cors({
