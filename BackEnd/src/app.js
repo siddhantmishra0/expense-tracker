@@ -8,7 +8,7 @@ dotenv.config({
 })
 const app = express()
 app.use(cors({
-  origin: [process.env.CORS_ORIGIN, process.env.FRONTEND_URL], // allow both local & deployed frontend
+  origin: [process.env.FRONTEND_URL], // allow both local & deployed frontend
   credentials: true, // allow cookies/auth headers
 }));
 app.use(cookieParser())
