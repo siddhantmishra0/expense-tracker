@@ -765,6 +765,8 @@ function Budget() {
     return (spent / budget) * 100 <= 50 ? "down" : "up";
   };
 
+
+  
   // Show loading state while fetching initial data
   if (fetchingData) {
     return (
