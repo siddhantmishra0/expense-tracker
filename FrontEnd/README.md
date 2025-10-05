@@ -1,3 +1,13 @@
+## Environment Variables
+
+Create a `.env` file in `FrontEnd/` with:
+
+```
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+On Vercel, set `VITE_API_BASE_URL` to your Render backend URL (e.g., `https://<your-render-service>.onrender.com`).
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

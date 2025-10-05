@@ -112,7 +112,7 @@ const login = async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: "None",
       path: "/",
     };
     return res
@@ -147,7 +147,7 @@ const logout = async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: "None",
       path: "/",
     };
     return res
@@ -182,7 +182,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const options = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      sameSite: "None",
       path: "/",
     };
     const { accessToken, newRefreshToken } =
@@ -228,7 +228,10 @@ const postBudget = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
-    const existingBudget = await BudgetModel.findOne({ userId,category:budgetType });
+    const existingBudget = await BudgetModel.findOne({
+      userId,
+      category: budgetType,
+    });
     let updatedBudget;
     let newBudgetAmount = parseFloat(budgetAmount);
     let budgetDifference = newBudgetAmount;
@@ -247,22 +250,25 @@ const postBudget = async (req, res) => {
       });
       await updatedBudget.save();
     }
-    const overallCategory = await BudgetModel.findOne({ userId,category: "Overall" });
+    const overallCategory = await BudgetModel.findOne({
+      userId,
+      category: "Overall",
+    });
     let overallBudget;
-    if(overallCategory){
+    if (overallCategory) {
       const overallAmount = overallCategory.amount + budgetDifference;
       overallBudget = await BudgetModel.findByIdAndUpdate(
         overallCategory._id,
-        {amount: parseFloat(overallAmount)},
-        {new: true}
-      )
-    } else{
+        { amount: parseFloat(overallAmount) },
+        { new: true }
+      );
+    } else {
       overallBudget = new BudgetModel({
         userId,
         amount: newBudgetAmount,
-        category: "Overall"
-      })
-      await overallBudget.save()
+        category: "Overall",
+      });
+      await overallBudget.save();
     }
     console.log(existingBudget);
     console.log(overallBudget);
@@ -273,13 +279,10 @@ const postBudget = async (req, res) => {
   }
 };
 
-
-
-
 // const postBudget = async (req, res) => {
 //   try {
 //     const { userId, budgetAmount, budgetType } = req.body;
-    
+
 //     // Input validation
 //     if (!userId || !budgetAmount || !budgetType) {
 //       return res.status(400).json({ error: "Missing required fields" });
@@ -298,9 +301,9 @@ const postBudget = async (req, res) => {
 //     }
 
 //     // Find existing budget for this category
-//     const existingBudget = await BudgetModel.findOne({ 
-//       userId, 
-//       category: budgetType 
+//     const existingBudget = await BudgetModel.findOne({
+//       userId,
+//       category: budgetType
 //     });
 
 //     let updatedBudget;
@@ -309,7 +312,7 @@ const postBudget = async (req, res) => {
 //     if (existingBudget) {
 //       // Calculate the difference from existing budget
 //       budgetDifference = newBudgetAmount - (existingBudget.amount || 0);
-      
+
 //       updatedBudget = await BudgetModel.findByIdAndUpdate(
 //         existingBudget._id,
 //         { amount: newBudgetAmount },
@@ -326,18 +329,18 @@ const postBudget = async (req, res) => {
 //     }
 
 //     // Handle overall budget update
-//     const overallCategory = await BudgetModel.findOne({ 
-//       userId, 
-//       category: "Overall" 
+//     const overallCategory = await BudgetModel.findOne({
+//       userId,
+//       category: "Overall"
 //     });
 
 //     let overallBudget;
-    
+
 //     if (overallCategory) {
 //       // Safely calculate new overall amount
 //       const currentOverallAmount = overallCategory.amount || 0;
 //       const newOverallAmount = currentOverallAmount + budgetDifference;
-      
+
 //       overallBudget = await BudgetModel.findByIdAndUpdate(
 //         overallCategory._id,
 //         { amount: parseFloat(newOverallAmount) },
@@ -357,7 +360,7 @@ const postBudget = async (req, res) => {
 //     console.log("Overall Budget:", overallBudget);
 //     console.log("Updated Budget:", updatedBudget);
 
-//     return res.status(200).json({ 
+//     return res.status(200).json({
 //       success: true,
 //       newBudget: updatedBudget,
 //       overallBudget: overallBudget
@@ -365,13 +368,12 @@ const postBudget = async (req, res) => {
 
 //   } catch (error) {
 //     console.error("Budget creation error:", error);
-//     return res.status(500).json({ 
-//       error: "Budget creation failed", 
-//       details: error.message 
+//     return res.status(500).json({
+//       error: "Budget creation failed",
+//       details: error.message
 //     });
 //   }
 // };
-
 
 // const postBudget = async (req, res) => {
 //   try {
@@ -832,7 +834,6 @@ const deleteBudget = async (req, res) => {
 //   }
 // }
 
-
 export {
   register,
   login,
@@ -847,7 +848,7 @@ export {
   deleteExpenses,
   updateBudget,
   deleteBudget,
-  deleteExpensesByCategory
+  deleteExpensesByCategory,
 };
 
 // const login = async (req, res) => {

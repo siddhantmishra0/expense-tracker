@@ -18,7 +18,7 @@ import {
   Legend,
   ArcElement,
 } from "chart.js";
-import axios from "axios";
+import api from "../apiClient";
 
 // Register Chart.js components
 ChartJS.register(
@@ -53,10 +53,8 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/login", {
-        withCredentials: true,
-      })
+    api
+      .get("/login")
       .then((response) => setUserId(response.data.user._id))
       .catch((error) => {
         console.log("Fetch error: ", error);
@@ -67,10 +65,7 @@ function Dashboard() {
   const fetchExpenses = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/expense?userId=${userId}`);
       setExpenses(res.data);
     } catch (error) {
       console.log("Error while fetching expenses ", error);
@@ -80,10 +75,7 @@ function Dashboard() {
   const fetchBudget = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/budget?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/budget?userId=${userId}`);
       setBudget(res.data);
       // console.log(res.data);
     } catch (error) {

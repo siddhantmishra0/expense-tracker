@@ -4,9 +4,9 @@ import Expenses from "./Expenses";
 import Report from "./Report";
 import Budget from "./Budget";
 import Insights from "./Insights";
-import { useNavigate,Link, useLocation, Outlet } from "react-router-dom";
+import { useNavigate, Link, useLocation, Outlet } from "react-router-dom";
 import { useEffect } from "react";
-import axios from "axios";
+import api from "../apiClient";
 import toast from "react-hot-toast";
 
 export default function Navbar() {
@@ -15,24 +15,20 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/login", {
-        withCredentials: true,
-      })
+    api
+      .get("/login")
       .then((response) => setUser(response.data.user.username))
       .catch((error) => {
         console.log("Fetch error: ", error);
         window.location.href = "/";
         toast.success("Logged out successfully!");
-
       });
-    }, []);
+  }, []);
 
   const handleClick = (e) => {
     e.preventDefault();
-    axios.post("http://localhost:3000/logout",{}, {
-      withCredentials: true
-    })
+    api
+      .post("/logout", {})
       .then((result) => {
         console.log(result);
         try {
@@ -77,15 +73,15 @@ export default function Navbar() {
           ].map((item, idx) => (
             <Link key={idx} to={item.path}>
               <div
-              className={`w-full text-left px-4 py-2 rounded-md font-medium ${
-                location.pathname === item.path
-                  ? "bg-black text-white"
-                  : "text-black hover:bg-gray-100"
-              }`}
-              // onClick={() => setRightSide(item.value)}
-            >
-              {item.label}
-            </div>
+                className={`w-full text-left px-4 py-2 rounded-md font-medium ${
+                  location.pathname === item.path
+                    ? "bg-black text-white"
+                    : "text-black hover:bg-gray-100"
+                }`}
+                // onClick={() => setRightSide(item.value)}
+              >
+                {item.label}
+              </div>
             </Link>
           ))}
         </div>
@@ -95,7 +91,7 @@ export default function Navbar() {
           {rightSide === "report" && <Report />}
           {rightSide === "budget" && <Budget />}
           {rightSide === "insight" && <Insights />} */}
-          <Outlet/>
+          <Outlet />
         </div>
       </div>
     </>

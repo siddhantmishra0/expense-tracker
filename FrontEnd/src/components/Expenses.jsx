@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Trash } from "lucide-react";
-import axios from "axios";
+import api from "../apiClient";
 import { v4 as uuidv4 } from "uuid";
 
 function Expenses() {
@@ -15,10 +15,8 @@ function Expenses() {
   const [budgetError, setBudgetError] = useState("");
 
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/login", {
-        withCredentials: true,
-      })
+    api
+      .get("/login")
       .then((response) => setUserId(response.data.user._id))
       .catch((error) => {
         console.log("Fetch error: ", error);
@@ -29,10 +27,7 @@ function Expenses() {
   const fetchExpenses = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/expense?userId=${userId}`);
       setExpenses(res.data);
     } catch (error) {
       console.log("Error while fetching expenses ", error);
@@ -42,10 +37,7 @@ function Expenses() {
   const fetchBudget = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/budget?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/budget?userId=${userId}`);
       setBudget(res.data);
     } catch (error) {
       console.log("Error while fetching budgets ", error);
@@ -106,26 +98,20 @@ function Expenses() {
     const validation = validateBudget(category, expenseAmount);
 
     if (!validation.isValid) {
-      setBudgetError(validation.message);   
+      setBudgetError(validation.message);
       return;
     }
 
     try {
-      await axios.post(
-        "http://localhost:3000/home/expense",
-        {
-          description,
-          amount: expenseAmount,
-          date,
-          category,
-          tags: tags.split(",").map((tag) => tag.trim()),
-          userId,
-          budget,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+      await api.post("/home/expense", {
+        description,
+        amount: expenseAmount,
+        date,
+        category,
+        tags: tags.split(",").map((tag) => tag.trim()),
+        userId,
+        budget,
+      });
 
       // Reset form
       setDescription("");
@@ -149,9 +135,7 @@ function Expenses() {
     );
     if (!confirmDelete) return;
     try {
-      await axios.delete(`http://localhost:3000/home/expense/${id}`, {
-        withCredentials: true,
-      });
+      await api.delete(`/home/expense/${id}`);
       setExpenses(expenses.filter((expense) => expense._id !== id));
       fetchBudget(); // Refresh budget data after deletion
     } catch (error) {

@@ -8,7 +8,7 @@ import {
   CircleCheckBig,
   Loader,
 } from "lucide-react";
-import axios from "axios";
+import api from "../apiClient";
 
 function Insights() {
   const [buttonType, setButtonType] = useState("Recommendations");
@@ -26,16 +26,14 @@ function Insights() {
 
   // Fetch user ID
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/login", {
-        withCredentials: true,
-      })
+    api
+      .get("/login")
       .then((response) => setUserId(response.data.user._id))
       .catch((error) => {
         console.log("Fetch error: ", error);
         window.location.href = "/";
       });
-    }, []);
+  }, []);
 
   // Fetch expenses when userId changes
   useEffect(() => {
@@ -56,10 +54,7 @@ function Insights() {
   const fetchExpenses = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/expense?userId=${userId}`);
       setExpenses(res.data);
     } catch (error) {
       console.log("Error while fetching expenses ", error);
@@ -137,7 +132,7 @@ function Insights() {
         percentage:
           currentTotal > 0 ? (topCategory.amount / currentTotal) * 100 : 0,
       },
-      savingsPotential: 0, 
+      savingsPotential: 0,
       changeFromLastMonth: {
         amount: Math.abs(changeAmount),
         percentage: Math.abs(changePercentage),

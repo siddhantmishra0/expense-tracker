@@ -1,4 +1,3 @@
-
 // import express from "express";
 // import cors from "cors";
 // import cookieParser from "cookie-parser";
@@ -69,29 +68,33 @@
 //   });
 // });
 
-
-
-
-
-
-
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import UserRouter from "./routes/authRoutes.js";
 import dotenv from "dotenv";
 
-
 dotenv.config({
   // path: join(__dirname, "../.env"), // More reliable path resolution
 });
 const app = express();
+
+// Dynamic CORS for local dev and deployed frontend (Vercel)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173", // Your frontend URL
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ← Include PUT
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
@@ -100,29 +103,14 @@ app.use(cookieParser());
 app.use(express.json()); // ← This is CRITICAL
 app.use(express.urlencoded({ extended: true }));
 
-// app.get("/login",verifyJWT,getLogin)
+// Health check for Render
+app.get("/health", (req, res) => {
+  res.json({ status: "OK" });
+});
 
 app.use("/", UserRouter);
 
 export { app };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // // Handle 404 routes
 // app.use("*", (req, res) => {

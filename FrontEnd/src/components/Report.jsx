@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useEffect } from "react";
-import axios from "axios"; // Make sure to import axios
+import api from "../apiClient"; // centralized API client
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,16 +43,14 @@ function Report(props) {
 
   // Fetch user ID
   useEffect(() => {
-    axios
-      .get("http://localhost:3000/login", {
-        withCredentials: true,
-      })
+    api
+      .get("/login")
       .then((response) => setUserId(response.data.user._id))
       .catch((error) => {
         console.log("Fetch error: ", error);
         window.location.href = "/";
       });
-    }, []);
+  }, []);
 
   // Fetch expenses when userId changes
   useEffect(() => {
@@ -64,10 +62,7 @@ function Report(props) {
   const fetchExpenses = async () => {
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
-        { withCredentials: true }
-      );
+      const res = await api.get(`/home/expense?userId=${userId}`);
       setExpenses(res.data);
     } catch (error) {
       console.log("Error while fetching expenses ", error);

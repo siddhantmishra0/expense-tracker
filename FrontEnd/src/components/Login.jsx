@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../apiClient";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
@@ -11,14 +11,8 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    axios
-      .post(
-        "http://localhost:3000/login",
-        { username, password },
-        {
-          withCredentials: true,
-        }
-      )
+    api
+      .post("/login", { username, password })
       .then((result) => {
         console.log(result);
         if (result.data.status === "success") {
