@@ -81,11 +81,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import UserRouter from "./routes/authRoutes.js";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 dotenv.config({
   // path: join(__dirname, "../.env"), // More reliable path resolution
@@ -93,14 +89,15 @@ dotenv.config({
 const app = express();
 app.use(
   cors({
-    // origin: [process.env.FRONTEND_URL], // allow both local & deployed frontend
-    origin: "http://localhost:5173",
-    credentials: true, // allow cookies/auth headers
+    origin: "http://localhost:5173", // Your frontend URL
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ← Include PUT
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(cookieParser());
 
-app.use(express.json()); // middleware function in Express that parses incoming JSON payloads (data sent in the body of a request) and makes it available under req.body.
+app.use(express.json()); // ← This is CRITICAL
 app.use(express.urlencoded({ extended: true }));
 
 // app.get("/login",verifyJWT,getLogin)

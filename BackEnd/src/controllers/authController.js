@@ -631,7 +631,175 @@ const deleteExpenses = async (req, res) => {
   }
 };
 
+const deleteExpensesByCategory = async (req, res) => {
+  try {
+    const { userId, category } = req.body;
 
+    // Validation
+    if (!userId || !category) {
+      return res.status(400).json({
+        error: "Missing required fields: userId and category",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: "Invalid user ID format" });
+    }
+
+    // Delete ALL expenses matching userId AND category
+    const result = await ExpenseModel.deleteMany({
+      userId: userId,
+      category: category,
+    });
+
+    console.log(
+      `Deleted ${result.deletedCount} expense(s) with category: ${category} for User: ${userId}`
+    );
+
+    return res.status(200).json({
+      message: "Expenses deleted successfully",
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    console.error("Error deleting expenses:", error);
+    return res.status(500).json({
+      error: "Error deleting expenses",
+      details: error.message,
+    });
+  }
+};
+
+const updateBudget = async (req, res) => {
+  try {
+    const { amount, category } = req.body;
+    const budgetId = req.params.id;
+    const userId = req.user._id; // From verifyJWT middleware
+
+    // DEBUG: Log what you received
+    console.log("Received update request:", {
+      budgetId,
+      userId,
+      category,
+      amount,
+      amountType: typeof amount,
+    });
+
+    // --- Validation ---
+    if (!budgetId || !mongoose.Types.ObjectId.isValid(budgetId)) {
+      console.log("Validation failed: invalid budget ID");
+      return res.status(400).json({ error: "Invalid budget ID format" });
+    }
+
+    if (amount === undefined || amount === null) {
+      console.log("Validation failed: missing amount");
+      return res.status(400).json({
+        error: "Missing required field: amount",
+      });
+    }
+
+    const numericAmount = Number(amount);
+    if (isNaN(numericAmount) || numericAmount < 0) {
+      console.log("Validation failed: invalid amount", {
+        amount,
+        numericAmount,
+      });
+      return res.status(400).json({
+        error: "Amount must be a non-negative number",
+      });
+    }
+
+    console.log("Validation passed, updating budget...");
+
+    // Update by ID and userId to ensure user owns this budget
+    const updatedBudget = await BudgetModel.findOneAndUpdate(
+      { _id: budgetId, userId: userId },
+      { $set: { amount: numericAmount } },
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedBudget) {
+      console.log("Budget not found");
+      return res.status(404).json({
+        error: "Budget not found or you don't have permission to update it",
+      });
+    }
+
+    console.log("Budget updated successfully:", updatedBudget);
+    return res.status(200).json({
+      message: "Budget updated successfully",
+      data: updatedBudget,
+    });
+  } catch (error) {
+    console.error("Error updating budget:", error);
+    return res.status(500).json({
+      error: "Failed to update budget",
+      details: error.message,
+    });
+  }
+};
+
+const deleteBudget = async (req, res) => {
+  try {
+    const result = await BudgetModel.findOneAndDelete({
+      // ✅ Use BudgetModel
+      userId: req.user._id,
+      _id: req.params.id,
+    });
+
+    if (!result) {
+      return res.status(404).json({ error: "Budget not found" });
+    }
+
+    console.log(
+      "Deleted Budget with ID:",
+      req.params.id,
+      "for User:",
+      req.user._id
+    );
+
+    res.status(200).json({
+      message: "Budget deleted successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error deleting budget:", error);
+    res.status(500).json({ error: "Error deleting budget" });
+  }
+};
+// const deleteBudget = async (req, res) => {
+//   try {
+//     const { userId, category } = req.body; // ← Changed from budgetType
+
+//     if (!userId || !category) {
+//       return res
+//         .status(400)
+//         .json({ error: "Missing required fields: userId and category" });
+//     }
+
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       return res.status(400).json({ error: "Invalid user ID format" });
+//     }
+
+//     const deletedBudget = await BudgetModel.findOneAndDelete({
+//       userId: userId,
+//       category: category,
+//     });
+
+//     if (!deletedBudget) {
+//       return res
+//         .status(404)
+//         .json({ error: "Budget not found for this user and category" });
+//     }
+
+//     return res.status(200).json({ message: "Budget deleted successfully" });
+//   } catch (error) {
+//     console.error("Error deleting budget:", error);
+//     return res.status(500).json({
+//       error: "Failed to delete budget",
+//       details: error.message,
+//     });
+//   }
+// };
 //   // const postExpenses = async(req,res) => {
 //   // try {
 //   // const { newExpense } = req.body;
@@ -677,6 +845,9 @@ export {
   getExpenses,
   postExpenses,
   deleteExpenses,
+  updateBudget,
+  deleteBudget,
+  deleteExpensesByCategory
 };
 
 // const login = async (req, res) => {
