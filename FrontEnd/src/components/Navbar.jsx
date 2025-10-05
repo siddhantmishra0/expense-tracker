@@ -73,7 +73,7 @@ export default function Navbar() {
             { label: "Expenses", path: "/home/expense" },
             { label: "Reports", path: "/home/report" },
             { label: "Budget", path: "/home/budget" },
-            { label: "AI Insights", path: "/home/insight" },
+            { label: "Insights", path: "/home/insight" },
           ].map((item, idx) => (
             <Link key={idx} to={item.path}>
               <div

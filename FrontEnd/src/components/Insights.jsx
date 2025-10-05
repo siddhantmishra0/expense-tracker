@@ -137,7 +137,7 @@ function Insights() {
         percentage:
           currentTotal > 0 ? (topCategory.amount / currentTotal) * 100 : 0,
       },
-      savingsPotential: 0, // Will be calculated by AI
+      savingsPotential: 0, 
       changeFromLastMonth: {
         amount: Math.abs(changeAmount),
         percentage: Math.abs(changePercentage),

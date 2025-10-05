@@ -10,8 +10,6 @@ import Expenses from "./components/Expenses";
 import Report from "./components/Report";
 import Insights from "./components/Insights";
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-
 function App() {
     // const navigate = useNavigate();
 
