@@ -89,11 +89,7 @@ dotenv.config({
 const app = express();
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:3000",
-    ], // Your frontend URL
+    origin: ["https://expense-tracker-dusky-two-83.vercel.app/"], // Your frontend URL
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ← Include PUT
     allowedHeaders: ["Content-Type", "Authorization"],
