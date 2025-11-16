@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import ExpenseModel from "../models/expense.model.js";
 import BudgetModel from "../models/budget.model.js";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 
 // const register = async (req, res) => {
 //   try {
@@ -67,12 +68,16 @@ const register = async (req, res) => {
     if (!createdUser) {
       throw new Error("Something went wrong while registering the user.");
     }
-    return res
-      .status(200)
-      .json(createdUser)
-      .json("User registered successfully.");
+    return res.status(200).json({
+      message: "User registered successfully.",
+      user: createdUser,
+    });
   } catch (error) {
     console.log("Register error ", error);
+    return res.status(500).json({
+      error: "Registration failed",
+      details: error.message,
+    });
   }
 };
 
