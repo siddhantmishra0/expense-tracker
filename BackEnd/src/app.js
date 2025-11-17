@@ -21,7 +21,7 @@ app.use(
 );
 
 // Preflight support
-app.options("*", cors());
+// app.options("*", cors());
 
 // Fallback headers (Render fixes)
 app.use((req, res, next) => {
