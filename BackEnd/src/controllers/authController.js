@@ -111,8 +111,8 @@ const login = async (req, res) => {
     );
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
     };
     return res
@@ -146,8 +146,8 @@ const logout = async (req, res) => {
     );
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
     };
     return res
@@ -181,8 +181,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
     const options = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
       path: "/",
     };
     const { accessToken, newRefreshToken } =
