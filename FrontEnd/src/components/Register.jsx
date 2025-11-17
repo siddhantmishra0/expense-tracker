@@ -17,7 +17,7 @@ const Register = () => {
       toast.error("password and confirm password different");
       return;
     } 
-    axios.post("http://localhost:3000/register",{username,email,password})
+    axios.post(`${import.meta.env.VITE_API_BASE_URL}/register`,{username,email,password})
     .then(result => {console.log(result)
         toast.success("Registered successfully. Please login!")
         navigate("/login")

@@ -1,9 +1,4 @@
 import React, { useState } from "react";
-import Dashboard from "./Dashboard";
-import Expenses from "./Expenses";
-import Report from "./Report";
-import Budget from "./Budget";
-import Insights from "./Insights";
 import { useNavigate,Link, useLocation, Outlet } from "react-router-dom";
 import { useEffect } from "react";
 import axios from "axios";
@@ -16,7 +11,7 @@ export default function Navbar() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/login", {
+      .get(`${import.meta.env.VITE_API_BASE_URL}/login`, {
         withCredentials: true,
       })
       .then((response) => setUser(response.data.user.username))
@@ -30,7 +25,7 @@ export default function Navbar() {
 
   const handleClick = (e) => {
     e.preventDefault();
-    axios.post("http://localhost:3000/logout",{}, {
+    axios.post(`${import.meta.env.VITE_API_BASE_URL}/logout`,{}, {
       withCredentials: true
     })
       .then((result) => {
@@ -90,11 +85,6 @@ export default function Navbar() {
           ))}
         </div>
         <div className="flex-1 w-full">
-          {/* {rightSide === "dashboard" && <Dashboard />}
-          {rightSide === "expense" && <Expenses />}
-          {rightSide === "report" && <Report />}
-          {rightSide === "budget" && <Budget />}
-          {rightSide === "insight" && <Insights />} */}
           <Outlet/>
         </div>
       </div>

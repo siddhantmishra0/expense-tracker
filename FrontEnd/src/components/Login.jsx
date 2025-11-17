@@ -13,7 +13,7 @@ const Login = () => {
     e.preventDefault();
     axios
       .post(
-        "http://localhost:3000/login",
+        `${import.meta.env.VITE_API_BASE_URL}/login`,
         { username, password },
         {
           withCredentials: true,

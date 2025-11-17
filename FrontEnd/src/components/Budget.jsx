@@ -117,9 +117,12 @@ function Budget() {
   useEffect(() => {
     const getUserId = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/login", {
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_BASE_URL}/login`,
+          {
+            withCredentials: true,
+          }
+        );
         setUserId(response.data.user._id);
       } catch (error) {
         console.error("Authentication error:", error);
@@ -221,7 +224,7 @@ function Budget() {
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/budget?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/budget?userId=${userId}`,
         { withCredentials: true }
       );
       const data = res.data;
@@ -291,7 +294,7 @@ function Budget() {
 
     try {
       await axios.post(
-        "http://localhost:3000/home/budget",
+        `${import.meta.env.VITE_API_BASE_URL}/home/budget`,
         {
           userId,
           budgetAmount: parseFloat(budgetAmount),
@@ -321,7 +324,7 @@ function Budget() {
 
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/expense?userId=${userId}`,
         { withCredentials: true }
       );
       const data = res.data;
@@ -403,7 +406,7 @@ function Budget() {
 
     try {
       await axios.put(
-        `http://localhost:3000/home/budget/${budgetId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/budget/${budgetId}`,
         {
           amount: newAmount,
           category: editingCategory,
@@ -448,7 +451,7 @@ function Budget() {
 
     try {
       if (expenseByCategory[deletingCategory] > 0) {
-        await axios.delete("http://localhost:3000/home/expense", {
+        await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/home/expense`, {
           data: {
             userId,
             category: deletingCategory,
@@ -457,7 +460,7 @@ function Budget() {
         });
       }
 
-      await axios.delete(`http://localhost:3000/home/budget/${budgetId}`, {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/home/budget/${budgetId}`, {
         withCredentials: true,
       });
 

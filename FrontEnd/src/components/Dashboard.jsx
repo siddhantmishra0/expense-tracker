@@ -54,7 +54,7 @@ function Dashboard() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/login", {
+      .get(`${import.meta.env.VITE_API_BASE_URL}/login`, {
         withCredentials: true,
       })
       .then((response) => setUserId(response.data.user._id))
@@ -68,7 +68,7 @@ function Dashboard() {
     if (!userId) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/expense?userId=${userId}`,
         { withCredentials: true }
       );
       setExpenses(res.data);
@@ -81,7 +81,7 @@ function Dashboard() {
     if (!userId) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/budget?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/budget?userId=${userId}`,
         { withCredentials: true }
       );
       setBudget(res.data);

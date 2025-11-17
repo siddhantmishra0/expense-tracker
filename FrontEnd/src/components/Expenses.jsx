@@ -16,7 +16,7 @@ function Expenses() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:3000/login", {
+      .get(`${import.meta.env.VITE_API_BASE_URL}/login`, {
         withCredentials: true,
       })
       .then((response) => setUserId(response.data.user._id))
@@ -30,7 +30,7 @@ function Expenses() {
     if (!userId) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/expense?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/expense?userId=${userId}`,
         { withCredentials: true }
       );
       setExpenses(res.data);
@@ -43,7 +43,7 @@ function Expenses() {
     if (!userId) return;
     try {
       const res = await axios.get(
-        `http://localhost:3000/home/budget?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/home/budget?userId=${userId}`,
         { withCredentials: true }
       );
       setBudget(res.data);
@@ -112,7 +112,7 @@ function Expenses() {
 
     try {
       await axios.post(
-        "http://localhost:3000/home/expense",
+        `${import.meta.env.VITE_API_BASE_URL}/home/expense`,
         {
           description,
           amount: expenseAmount,
@@ -149,7 +149,7 @@ function Expenses() {
     );
     if (!confirmDelete) return;
     try {
-      await axios.delete(`http://localhost:3000/home/expense/${id}`, {
+      await axios.delete(`${import.meta.env.VITE_API_BASE_URL}/home/expense/${id}`, {
         withCredentials: true,
       });
       setExpenses(expenses.filter((expense) => expense._id !== id));
