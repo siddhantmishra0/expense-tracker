@@ -111,8 +111,8 @@ const login = async (req, res) => {
     );
     const options = {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       path: "/",
     };
     return res
@@ -146,8 +146,8 @@ const logout = async (req, res) => {
     );
     const options = {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       path: "/",
     };
     return res
@@ -181,8 +181,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
     const options = {
       httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "none" : "lax",
+      secure: true,
+      sameSite: "none",
       path: "/",
     };
     const { accessToken, newRefreshToken } =
