@@ -1,145 +1,46 @@
-
-// import express from "express";
-// import cors from "cors";
-// import cookieParser from "cookie-parser";
-// // import UserRouter from "./routes/authRoutes.js";
-
-// const app = express();
-
-// // Environment-specific CORS configuration
-// const allowedOrigins = [
-//   "http://localhost:5173", // Local development
-//   "http://localhost:3000", // Alternative local port
-//   process.env.FRONTEND_URL, // Production frontend URL (Vercel)
-// ];
-
-// app.use(
-//   cors({
-//     origin: function (origin, callback) {
-//       // Allow requests with no origin (mobile apps, Postman, etc.)
-//       if (!origin) return callback(null, true);
-
-//       if (allowedOrigins.indexOf(origin) !== -1) {
-//         callback(null, true);
-//       } else {
-//         callback(new Error("Not allowed by CORS"));
-//       }
-//     },
-//     credentials: true,
-//     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
-//   })
-// );
-
-// app.use(cookieParser());
-// app.use(express.json()); // Added size limit for security
-// app.use(express.urlencoded({ extended: true }));
-
-// // Health check endpoint for Render
-// app.get("/", (req, res) => {
-//   res.json({ message: "Server is working" });
-// });
-
-// app.get("/health", (req, res) => {
-//   res.json({ status: "OK" });
-// });
-
-// console.log("About to import UserRouter...");
-// try {
-//   const { default: UserRouter } = await import("./routes/authRoutes.js");
-//   console.log("UserRouter imported successfully");
-
-//   // Try to use the router
-//   console.log("About to use UserRouter...");
-//   app.use("/", UserRouter);
-//   console.log("UserRouter added successfully");
-// } catch (error) {
-//   console.error("Error with UserRouter:", error.message);
-//   console.error("Stack:", error.stack);
-// }
-// // Error handling middleware
-// app.use((err, req, res, next) => {
-//   console.error(err.stack);
-//   res.status(500).json({
-//     message: "Something went wrong!",
-//     error:
-//       process.env.NODE_ENV === "production"
-//         ? "Internal Server Error"
-//         : err.message,
-//   });
-// });
-
-
-
-
-
-
-
-
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import UserRouter from "./routes/authRoutes.js";
 import dotenv from "dotenv";
 
-
-dotenv.config({
-  // path: join(__dirname, "../.env"), // More reliable path resolution
-});
+dotenv.config({});
 const app = express();
+
+// --- CORS ---
 app.use(
   cors({
     origin: [
-      "https://expense-tracker-dusky-two-83.vercel.app/",
+      "https://expense-tracker-dusky-two-83.vercel.app",
       "http://localhost:5173",
-    ], // Your frontend URL
+    ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // ← Include PUT
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
+// Preflight support
+app.options("*", cors());
+
+// Fallback headers (Render fixes)
+app.use((req, res, next) => {
+  res.header(
+    "Access-Control-Allow-Origin",
+    "https://expense-tracker-dusky-two-83.vercel.app"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use(express.json()); // ← This is CRITICAL
-app.use(express.urlencoded({ extended: true }));
-
-// app.get("/login",verifyJWT,getLogin)
-
+// Routes
 app.use("/", UserRouter);
 
 export { app };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// // Handle 404 routes
-// app.use("*", (req, res) => {
-//   res.status(404).json({
-//     message: "Route not found",
-//     path: req.originalUrl,
-//   });
-// });
-
-// Use PORT from environment variable (Render provides this automatically)
-// const PORT = process.env.PORT || 3000;
-
-// app.listen(PORT, () => {
-//   console.log(`Server listening on port ${PORT}`);
-// });
-
-// export { app };
